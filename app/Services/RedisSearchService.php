@@ -84,10 +84,12 @@ final class RedisSearchService
     public function example(){
 
     }
-    public function seedingData()
+    public function seedingData($total = 1)
     {
         $faker = Faker::create('id_ID');
-        foreach (range(1,10000) as $index) {
+
+        $lazyCollection = collect(range(1,$total))->lazy();
+        $lazyCollection->each(function (int $number) use ($faker) {
             Property::create(
                 [
                     // 'title' => $faker->words(rand(5, 20), true),
@@ -104,10 +106,10 @@ final class RedisSearchService
                     'furnish' => $faker->randomElement(['furnished', 'unfurnished', 'semifurnished']),
                     'condition' => $faker->randomElement(['second', 'new']),
                     'created_at' => $faker->dateTime(),
-                    'category' => $faker->randomElement(['special'])
+                    'category' => $faker->randomElement(['special']),
+                    'description' => $faker->paragraph(80),
                 ]
             );
-        }
-        
+        });   
     }
 }

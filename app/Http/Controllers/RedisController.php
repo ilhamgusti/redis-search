@@ -43,22 +43,22 @@ class RedisController extends Controller
 
     }
 
-    public function examples(Request $request)
+    public function seeding(Request $request)
     {
         // $columns = $schema->listTableColumns('properties');
         // RedisSearchService::make()->buildIndex('properties-idx', ['properties:detail:']);
-        // RedisSearchService::make()->seedingData();
-
+        RedisSearchService::make()->seedingData($request->total);
+ 
         return [
             "ok" => 'ok',
-            'result' => RedisSearchService::make()->search(
-                indexName: $request->indexName,
-                query: $request->q,
-                highlights: $request->highlights,
-                returnFields: $request->returnFields,
-                limitOffset: $request->offset,
-                limitSize: $request->limit
-            )
+            // 'result' => RedisSearchService::make()->search(
+            //     indexName: $request->indexName,
+            //     query: $request->q,
+            //     highlights: $request->highlights,
+            //     returnFields: $request->returnFields,
+            //     limitOffset: $request->offset,
+            //     limitSize: $request->limit
+            // )
         ];
     }
 }
