@@ -8,15 +8,17 @@ use Illuminate\Http\Request;
 
 class RedisController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $originalData = Property::paginate(100)->withPath('data');
-        return view('index', ['originalData'=>$originalData, 'next' => $originalData->nextPageUrl(), 'data'=>[]]);
-    }
-
-    public function originalData(){
-        $originalData = Property::paginate(100)->withPath('data');
-        return view('index', ['originalData'=>$originalData, 'next' => $originalData->nextPageUrl(), 'data'=>[]])->fragment('original-data');
+        $originalData = Property::paginate(100);
+        return view(
+            'index',
+            [
+                'originalData' => $originalData,
+                'next' => $originalData->nextPageUrl(),
+                'data' => []
+            ]
+        )->fragmentsIf($request->hasHeader('HX-Request'), ['original-data']);
     }
 
     public function search(Request $request)
@@ -24,15 +26,21 @@ class RedisController extends Controller
         $data = RedisSearchService::make()->search(
             indexName: 'properties-idx',
             query: $request->q,
-            highlights: ['title', 'address','location', 'furnish', 'price'],
+            highlights: ['title', 'address', 'location', 'furnish', 'price'],
             returnFields: $request->returnFields,
             limitOffset: $request->offset,
             limitSize: $request->limit
         );
-        return view('index', ['originalData'=>[], 'next' => "", 'data'=> collect($data)->map(fn($data)=> $data->getFields())])->fragment('search-result');
-        // return response()->json(data: [
-        //     'data' => collect($data)->map(fn($data)=> $data->getFields())
-        // ]);
+
+        return view(
+            'index',
+            [
+                'originalData' => [],
+                'total'=> $data->getTotalCount(),
+                'data' => collect($data->current())->map(fn($data) => $data->getFields())
+            ]
+        )->fragment('search-result');
+
     }
 
     public function examples(Request $request)

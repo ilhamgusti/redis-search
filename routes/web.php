@@ -17,4 +17,3 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [RedisController::class, 'index']);
 
 Route::get('/search', [RedisController::class, 'search']);
-Route::get('/data', [RedisController::class, 'originalData']);

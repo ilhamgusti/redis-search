@@ -26,11 +26,7 @@ class Property extends Model
     {
         static::created(function (Property $property) {
 
-            $clientFacade = new ClientFacade();
-            $client = $clientFacade->getClient(Redis::client());
-            $index = new \MacFJA\RediSearch\Index('properties-idx', $client);
-
-            $index->addDocumentFromArray($property->toArray(), 'properties:detail:'.$property->id);
+            Redis::hMSet('properties:detail:'.$property->id, $property->toArray());
         });
     }
 }

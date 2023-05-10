@@ -5,13 +5,14 @@ use MacFJA\RediSearch\Redis\Client\ClientFacade;
 
 return new class extends Migration {
 
-    protected $client;
-    protected $indexName = 'properties-idx';
-    protected $prefixes = ['properties:detail:'];
+    private $client;
+    private $indexName = 'properties-idx';
+    private $prefixes;
 
     public function __construct()
     {
         $this->client = (new ClientFacade())->getClient(Redis::client());
+        $this->prefixes = [config('database.redis.options.prefix').'properties:detail:'];
     }
     /**
      * Run the migrations.

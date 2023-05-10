@@ -80,9 +80,10 @@
                 class="block w-full appearance-none rounded-r rounded-l border border-b border-gray-400 bg-white py-2 pl-8 pr-6 text-sm text-gray-700 placeholder-gray-400 focus:bg-white focus:text-gray-700 focus:placeholder-gray-600 focus:outline-none" />
         </div>
     </div>
-    <h2 class="my-8 text-xl font-medium leading-tight">Searching Result</h2>
+    <h2 class="my-8 mb-2 text-xl font-medium leading-tight">Searching Result:</h2>
     <div id="search-results">
         @fragment('search-result')
+        Total Data: {{$total ?? '-'}}
         @foreach ($data as $item)
             <ul class="pl-5 mt-2 space-y-1 list-none list-inside">
                 <li>title: {!! $item['title'] !!}</li>

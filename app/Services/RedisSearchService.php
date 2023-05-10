@@ -77,7 +77,7 @@ final class RedisSearchService
             }
             $results = $this->client->execute($search);
 
-        return $results->current();
+        return $results;
     }
 
 
