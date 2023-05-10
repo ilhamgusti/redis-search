@@ -1,4 +1,4 @@
-<?php
+<?php 
 
 namespace App\Library;
 
@@ -23,28 +23,15 @@ class PropertiesIndex {
 
 	public function buildIndex()
 	{
-		$this->down();
-		$this->client = (new ClientFacade())->getClient(Redis::client());
-        return $this->indexBuilder
-				->setPrefixes($this->prefixes)
-				->setIndex($this->indexName)
-				->addTagField('id', sortable: true)
-				->addTextField('title')
-				->addTextField('address')
-				->addTagField('location', separator: ',')
-				->addNumericField('price', sortable: true)
-				->addNumericField('landArea')
-				->addNumericField('buildingSize')
-				->addNumericField('bedroom')
-				->addNumericField('bathroom')
-				->addTextField('certificate')
-				->addTextField('type')
-				->addTextField('furnish')
-				->addTextField('condition')
-				->addTextField('category')
-				->addNumericField('created_at', sortable: true)
-				->addNumericField('description')
-				->create($this->client);
+		try {
+			$this->down();
+			$this->client = (new ClientFacade())->getClient(Redis::client());
+			return $this->createindex();
+		} catch (\Throwable $th) {
+			$this->client = (new ClientFacade())->getClient(Redis::client());
+			return $this->createindex();
+		}
+		
 	}
 
 
@@ -53,5 +40,29 @@ class PropertiesIndex {
         $index = new Index($this->indexName,$this->client);
         $index->delete();
     }
+
+	private function createindex() {
+			$this->client = (new ClientFacade())->getClient(Redis::client());
+			return $this->indexBuilder
+					->setPrefixes($this->prefixes)
+					->setIndex($this->indexName)
+					->addTagField('id', sortable: true)
+					->addTextField('title')
+					->addTextField('address')
+					->addTagField('location', separator: ',')
+					->addNumericField('price', sortable: true)
+					->addNumericField('landArea')
+					->addNumericField('buildingSize')
+					->addNumericField('bedroom')
+					->addNumericField('bathroom')
+					->addTextField('certificate')
+					->addTextField('type')
+					->addTextField('furnish')
+					->addTextField('condition')
+					->addTextField('category')
+					->addNumericField('created_at', sortable: true)
+					->addNumericField('description')
+					->create($this->client);
+	}
 	
 }
