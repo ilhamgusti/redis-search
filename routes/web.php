@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\RedisController;
+use App\Http\Controllers\PropertiesControlleer;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,3 +18,4 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [RedisController::class, 'index']);
 
 Route::get('/search', [RedisController::class, 'search']);
+Route::get('/insertproperties',[PropertiesControlleer::class,'index']);
