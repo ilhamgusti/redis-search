@@ -77,12 +77,12 @@ final class RedisSearchService
                 $search->setReturn(...$returnFields);
             }
 
-            if($sortByFields){
+            if(!empty($sortByFields)){
                 foreach ($sortByFields as $field => $direction) {
                     $search->setSortBy($field, $direction);
                 }
             }
-            
+
             $results = $this->client->execute($search);
 
         return $results;
