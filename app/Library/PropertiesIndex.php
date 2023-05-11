@@ -12,7 +12,7 @@ class PropertiesIndex {
 
 	private $client;
     private $indexName = 'properties-idx';
-    private $prefixes;
+	private $prefixes;
     private $indexBuilder;
 
 	public function __construct() {
@@ -61,7 +61,7 @@ class PropertiesIndex {
 					->addTextField('condition')
 					->addTextField('category')
 					->addNumericField('created_at', sortable: true)
-					->addNumericField('description')
+					->addTextField('description')
 					->create($this->client);
 	}
 	
