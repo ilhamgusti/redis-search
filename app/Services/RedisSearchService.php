@@ -55,13 +55,14 @@ final class RedisSearchService
         return $this;
     }
 
-    public function search(string $indexName, string $query, ?array $highlights = null, ?array $returnFields, ?int $limitOffset, ?int $limitSize)
+    public function search(string $indexName, string $query, ?array $highlights = null, ?array $returnFields, ?int $limitOffset, ?int $limitSize, ?array $sortByFields)
     {
 
         $search = new \MacFJA\RediSearch\Redis\Command\Search();
         $search
             ->setIndex($indexName)
             ->setQuery($query)
+    
             ->setWithScores();
             
             if ($limitOffset && $limitSize){
@@ -75,6 +76,13 @@ final class RedisSearchService
             if ($returnFields){
                 $search->setReturn(...$returnFields);
             }
+
+            if($sortByFields){
+                foreach ($sortByFields as $field => $direction) {
+                    $search->setSortBy($field, $direction);
+                }
+            }
+            
             $results = $this->client->execute($search);
 
         return $results;
