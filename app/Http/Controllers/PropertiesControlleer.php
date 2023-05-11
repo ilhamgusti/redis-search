@@ -2,9 +2,16 @@
 
 namespace App\Http\Controllers;
 
-
+use Ehann\RediSearch\Fields\Tag;
 use Illuminate\Support\Facades\Redis;
 use Faker\Factory as Faker;
+use MacFJA\RediSearch\Query\Builder\AndGroup;
+use MacFJA\RediSearch\Query\Builder\NumericFacet;
+use MacFJA\RediSearch\Query\Builder\OrGroup;
+use MacFJA\RediSearch\Query\Builder\TagFacet;
+use MacFJA\RediSearch\Query\Builder\TextFacet;
+use MacFJA\RediSearch\Redis\Client\ClientFacade;
+use MacFJA\RediSearch\Query\Builder\Word;
 
 
 class PropertiesControlleer extends Controller
@@ -40,5 +47,28 @@ class PropertiesControlleer extends Controller
             Redis::hMSet("property:$i", $propertyData);
         }
         return "Data properti telah disimpan di Redis.";
+    }
+
+
+    public function Searchtest()
+    {
+        $clientFacade = new ClientFacade();
+        $client = $clientFacade->getClient(Redis::client());
+        $queryBuilder = new \MacFJA\RediSearch\Query\Builder();
+        $query = $queryBuilder
+            ->addElement(new NumericFacet('price', 8767346433,17524451521))
+            ->addElement(new TagFacet(['location'],'Administrasi Jakarta Timur','Palangka Raya'))
+           // ->addElement(new OrGroup([new Word('furnished'),new Word('furnished')]))
+         ->render();
+        $search = new \MacFJA\RediSearch\Redis\Command\Search();
+        $search
+            ->setIndex('properties-idx')
+            ->setSortBy('price')
+            ->setQuery($query);
+        $results = $client->execute($search);
+        $items=$results->current();
+        foreach ($items as $key => $value) {
+            echo '<pre>';print_r($value->getFields());
+        }
     }
 }

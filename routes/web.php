@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\RedisController;
 use App\Http\Controllers\PropertiesControlleer;
+use App\Library\PropertiesIndex;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,5 +19,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [RedisController::class, 'index']);
 
 Route::get('/search', [RedisController::class, 'search']);
+Route::get('/searchtest', [PropertiesControlleer::class, 'Searchtest']);
 Route::get('/seeding', [RedisController::class, 'seeding']);
 Route::get('/insertproperties',[PropertiesControlleer::class,'index']);
