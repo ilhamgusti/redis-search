@@ -92,11 +92,10 @@ final class RedisSearchService
         $lazyCollection->each(function (int $number) use ($faker) {
             Property::create(
                 [
-                    // 'title' => $faker->words(rand(5, 20), true),
                     'title' => $faker->sentence(rand(5, 20), true),
                     'address' => $faker->address(),
                     'location' => $faker->city(),
-                    'price' => $faker->numberBetween(100_000_000, 1_000_000_000_000),
+                    'price' => $faker->numberBetween(100_000_000, 50_000_000_000),
                     'landArea' => $faker->numberBetween(24, 300),
                     'buildingSize'=> $faker->numberBetween(24, 300),
                     'bedroom' => $faker->numberBetween(1,10),
