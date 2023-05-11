@@ -84,7 +84,6 @@ class RedisController extends Controller
             limitOffset: $request->offset,
             limitSize: $request->limit,
             sortByFields: [
-                'price' => 'desc',
                 ...$sortByFields
             ]
         );
