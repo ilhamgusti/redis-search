@@ -17,7 +17,7 @@ class PropertiesIndex {
 
 	public function __construct() {
 		$this->client = (new ClientFacade())->getClient(Redis::client());
-        $this->prefixes = [config('database.redis.options.prefix').'property:'];
+        $this->prefixes = [config('database.redis.options.prefix').config('app.properties')];
         $this->indexBuilder = new IndexBuilder();
 	}
 
