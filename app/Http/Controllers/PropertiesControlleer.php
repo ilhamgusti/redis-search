@@ -53,26 +53,38 @@ class PropertiesControlleer extends Controller
 
     public function Searchtest()
     {
-        $clientFacade = new ClientFacade();
-        $client = $clientFacade->getClient(Redis::client());
-        $queryBuilder = new \MacFJA\RediSearch\Query\Builder();
-        $query = $queryBuilder
-            ->addElement(new Word('expedita-ullam'))
-            ->addElement(new NumericFacet('price', 8767346433,17524451521))
-            //->addElement(new TagFacet(['location'],'Jakarta Timur'))
-            //->addElement(new OrGroup([new Word('furnished'),new Word('furnished')]))
-         ->render();
-        $search = new \MacFJA\RediSearch\Redis\Command\Search();
-        $search
-            ->setIndex('properties-idx')
-            //->setHighlight(['furnish'])
-            ->setSortBy('price')
-            ->setQuery($query);
-        $results = $client->execute($search);
-        $items=$results->current();
-        foreach ($items as $key => $value) {
-            echo '<pre>';print_r($value->getFields());
-        }
+
+        $awal = microtime(true);
+            $clientFacade = new ClientFacade();
+            $client = $clientFacade->getClient(Redis::client());
+            $queryBuilder = new \MacFJA\RediSearch\Query\Builder();
+            $query = $queryBuilder
+                ->addElement(new Word('Commodi'))
+                // ->addElement(new TagFacet(['furnish'],'unfurnished'))
+                // //->addElement(new NumericFacet('price', 8774349532,43505326986))
+                // ->addElement(new TagFacet(['condition'],'new'))
+                // ->addElement(new TagFacet(['location'],'Malang'))
+                // ->addElement(new TagFacet(['certificate'],'SHM'))
+                //->addElement(new OrGroup([new Word('furnished'),new Word('furnished')]))
+            ->render();
+            $search = new \MacFJA\RediSearch\Redis\Command\Search();
+            $search
+                ->setIndex('properties-idx')
+                //->setHighlight(['furnish'])
+                ->setSortBy('price')
+                ->setLimit(1,6829)
+                ->setQuery($query);
+                
+            $results = $client->execute($search);
+            $items=$results->current();
+            $total=$results->getTotalCount();
+            echo '<pre>';print_r($total);
+            foreach ($items as $key => $value) {
+                echo '<pre>';print_r($value->getFields());
+            }
+            $akhir = microtime(true);
+            $lama = ($akhir - $awal) ;
+            echo "Lama eksekusi script adalah: ".$lama." microsecond";
     }
 
     
