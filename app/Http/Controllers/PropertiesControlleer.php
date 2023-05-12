@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Property;
 use Ehann\RediSearch\Fields\Tag;
 use Illuminate\Support\Facades\Redis;
 use Faker\Factory as Faker;
@@ -56,13 +57,15 @@ class PropertiesControlleer extends Controller
         $client = $clientFacade->getClient(Redis::client());
         $queryBuilder = new \MacFJA\RediSearch\Query\Builder();
         $query = $queryBuilder
+            ->addElement(new Word('expedita-ullam'))
             ->addElement(new NumericFacet('price', 8767346433,17524451521))
-            ->addElement(new TagFacet(['location'],'Administrasi Jakarta Timur','Palangka Raya'))
-           // ->addElement(new OrGroup([new Word('furnished'),new Word('furnished')]))
+            //->addElement(new TagFacet(['location'],'Jakarta Timur'))
+            //->addElement(new OrGroup([new Word('furnished'),new Word('furnished')]))
          ->render();
         $search = new \MacFJA\RediSearch\Redis\Command\Search();
         $search
             ->setIndex('properties-idx')
+            //->setHighlight(['furnish'])
             ->setSortBy('price')
             ->setQuery($query);
         $results = $client->execute($search);
@@ -71,4 +74,6 @@ class PropertiesControlleer extends Controller
             echo '<pre>';print_r($value->getFields());
         }
     }
+
+    
 }
