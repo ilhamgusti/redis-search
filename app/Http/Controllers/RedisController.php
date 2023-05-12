@@ -33,6 +33,8 @@ class RedisController extends Controller
         $bedroom = $request->bedroom;
         $landAreaMin = $request->landAreaMin;
         $landAreaMax = $request->landAreaMax;
+        $buildingSizeMin = $request->buildingSizeMin;
+        $buildingSizeMax = $request->buildingSizeMax;
         $type = $request->type;
         $category = $request->category;
         $certificate = $request->certificate;
@@ -52,6 +54,14 @@ class RedisController extends Controller
             $queryBuilder->addElement(NumericFacet::greaterThanOrEquals('bedroom', $bedroom));
         }
 
+        if (!is_null($landAreaMin) && !is_null($landAreaMax)){
+            $queryBuilder->addElement(new NumericFacet('landArea', $landAreaMin, $landAreaMax));
+        }    
+        
+        if (!is_null($buildingSizeMin) && !is_null($buildingSizeMax)){
+            $queryBuilder->addElement(new NumericFacet('buildingSize', $buildingSizeMin, $buildingSizeMax));
+        }    
+        
         if (!is_null($landAreaMin) && !is_null($landAreaMax)){
             $queryBuilder->addElement(new NumericFacet('landArea', $landAreaMin, $landAreaMax));
         }

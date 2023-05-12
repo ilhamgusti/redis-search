@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Redis;
 use MacFJA\RediSearch\Query\Builder;
 use MacFJA\RediSearch\Redis\Client\ClientFacade;
 use Faker\Factory as Faker;
+use MacFJA\RediSearch\Redis\Command\Profile;
 
 final class RedisSearchService
 {
@@ -57,7 +58,7 @@ final class RedisSearchService
 
     public function search(string $indexName, string $query, ?array $highlights = null, ?array $returnFields, ?int $limitOffset, ?int $limitSize, ?array $sortByFields)
     {
-
+        $startTime = microtime(true); //get time in micro seconds(1 millionth)
         $search = new \MacFJA\RediSearch\Redis\Command\Search();
         $search
             ->setIndex($indexName)
@@ -69,7 +70,7 @@ final class RedisSearchService
             }
 
             if ($highlights){
-                $search->setHighlight($highlights, '<strong>', '</strong>');
+                $search->setHighlight($highlights);
             }
 
             if ($returnFields){
@@ -81,8 +82,22 @@ final class RedisSearchService
                     $search->setSortBy($field, $direction);
                 }
             }
-
+            $command = new Profile('2.2.0');
+            $command
+                ->setIndex($indexName)
+                ->setTypeSearch()
+                ->setQuery($search)->setLimited();            
+            
             $results = $this->client->execute($search);
+
+            $endTime = microtime(true);
+
+            $profileResults = $this->client->execute($command);
+
+                    
+            echo "milliseconds to execute:". ($endTime-$startTime)*1000;
+            dd($profileResults[1][0][0]." : " . $profileResults[1][0][1] . ' ms', $search,$command, $results);
+            
 
         return $results;
     }
