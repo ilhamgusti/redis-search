@@ -64,8 +64,7 @@ final class RedisSearchService
             ->setQuery($query)
     
             ->setWithScores();
-            
-            if ($limitOffset && $limitSize){
+            if (!is_null($limitOffset) && !is_null($limitSize)){
                 $search->setLimit($limitOffset, $limitSize);
             }
 

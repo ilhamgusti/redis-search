@@ -48,7 +48,7 @@ class RedisController extends Controller
             $queryBuilder->addElement(NumericFacet::greaterThanOrEquals('bedroom', $bedroom));
         }
 
-        if ($landAreaMin && $landAreaMax){
+        if (!is_null($landAreaMin) && !is_null($landAreaMax)){
             $queryBuilder->addElement(new NumericFacet('landArea', $landAreaMin, $landAreaMax));
         }
 
