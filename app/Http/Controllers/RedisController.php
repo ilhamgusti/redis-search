@@ -33,10 +33,14 @@ class RedisController extends Controller
         $bedroom = $request->bedroom;
         $landAreaMin = $request->landAreaMin;
         $landAreaMax = $request->landAreaMax;
+        $type = $request->type;
+        $category = $request->category;
+        $certificate = $request->certificate;
+        $condition = $request->condition;
         
         $queryBuilder = new \MacFJA\RediSearch\Query\Builder();
 
-        if ($minPrice && $maxPrice){
+        if (!is_null($minPrice) && !is_null($maxPrice)){
             $queryBuilder->addElement(new NumericFacet('price', $minPrice, $maxPrice));
         }
 
@@ -48,7 +52,7 @@ class RedisController extends Controller
             $queryBuilder->addElement(NumericFacet::greaterThanOrEquals('bedroom', $bedroom));
         }
 
-        if ($landAreaMin && $landAreaMax){
+        if (!is_null($landAreaMin) && !is_null($landAreaMax)){
             $queryBuilder->addElement(new NumericFacet('landArea', $landAreaMin, $landAreaMax));
         }
 
@@ -64,8 +68,44 @@ class RedisController extends Controller
             }
         }
 
+        if($type){
+            if(is_array($type)){
+                $queryBuilder->addTagFacet('type',  ...$type);
+            }else{
+                $queryBuilder->addTagFacet('type', $type);
+            }
+        }
+
+        if($category){
+            if(is_array($category)){
+                $queryBuilder->addTagFacet('category',  ...$category);
+            }else{
+                $queryBuilder->addTagFacet('category', $category);
+            }
+        }
+
+        if($condition){
+            if(is_array($condition)){
+                $queryBuilder->addTagFacet('condition',  ...$condition);
+            }else{
+                $queryBuilder->addTagFacet('condition', $condition);
+            }
+        }
+
+        if($certificate){
+            if(is_array($certificate)){
+                $queryBuilder->addTagFacet('certificate',  ...$certificate);
+            }else{
+                $queryBuilder->addTagFacet('certificate', $certificate);
+            }
+        }
+
         if($furnish){
-            $queryBuilder->addTagFacet('furnish', $furnish);
+            if(is_array($furnish)){
+                $queryBuilder->addTagFacet('furnish',  ...$furnish);
+            }else{
+                $queryBuilder->addTagFacet('furnish', $furnish);
+            }
         }
 
         $sortByFields = $request->sortBy;
@@ -79,12 +119,11 @@ class RedisController extends Controller
         $data = RedisSearchService::make()->search(
             indexName: 'properties-idx',
             query: $query,
-            highlights: ['title', 'address', 'location', 'furnish', 'price'],
+            highlights: ['title', 'address', 'location', 'furnish', 'price','description'],
             returnFields: $request->returnFields,
             limitOffset: $request->offset,
             limitSize: $request->limit,
             sortByFields: [
-                'price' => 'desc',
                 ...$sortByFields
             ]
         );

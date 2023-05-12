@@ -64,8 +64,7 @@ final class RedisSearchService
             ->setQuery($query)
     
             ->setWithScores();
-            
-            if ($limitOffset && $limitSize){
+            if (!is_null($limitOffset) && !is_null($limitSize)){
                 $search->setLimit($limitOffset, $limitSize);
             }
 
@@ -77,12 +76,12 @@ final class RedisSearchService
                 $search->setReturn(...$returnFields);
             }
 
-            if($sortByFields){
+            if(!empty($sortByFields)){
                 foreach ($sortByFields as $field => $direction) {
                     $search->setSortBy($field, $direction);
                 }
             }
-            
+
             $results = $this->client->execute($search);
 
         return $results;
