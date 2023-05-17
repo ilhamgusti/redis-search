@@ -22,7 +22,6 @@ Route::get('/search', [RedisController::class, 'search']);
 Route::get('/searchtest', [PropertiesControlleer::class, 'Searchtest']);
 Route::get('/searchtest/{id?}', [PropertiesControlleer::class, 'Searchbyid']);
 Route::get('/seeding', [RedisController::class, 'seeding']);
-Route::get('/insertproperties',[PropertiesControlleer::class,'index']);
-
-
+Route::get('/wilayah', [RedisController::class, 'wilayah']);
 Route::get('/searchdata', [PropertiesControlleer::class, 'Searchdeveloper']);
+Route::get('/insertproperties',[PropertiesControlleer::class,'index']);
