@@ -5,6 +5,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Property;
 use App\Services\RedisSearchService;
 use Illuminate\Http\Request;
+use DB;
+use Str;
 use MacFJA\RediSearch\Query\Builder\NumericFacet;
 
 class RedisController extends Controller
@@ -138,6 +140,12 @@ class RedisController extends Controller
             ]
         );
 
+        $location = RedisSearchService::make()->search(
+            indexName: 'location-idx',
+            query: "$request->q*",
+            highlights: ['name'],
+        );
+
         // $content = view(
         //     'index',
         //     [
@@ -152,7 +160,8 @@ class RedisController extends Controller
         return response()->json([
                     'originalData' => [],
                     'total'=> $data->getTotalCount(),
-                    'data' => collect($data->current())->map(fn($data) => $data->getFields())
+                    'data' => collect($data->current())->map(fn($data) => $data->getFields()),
+                    'location' => collect($location->current())->map(fn($data) => $data->getFields())
         ]);
 
     }
@@ -163,6 +172,69 @@ class RedisController extends Controller
  
         return [
             "ok" => 'ok',
+        ];
+    }
+
+    public function wilayah(){
+            // $kelurahan = DB::table('reg_provinces')
+            // ->selectRaw("reg_provinces.name AS provinsi, reg_regencies.name AS kabupaten_kota, reg_districts.name AS kecamatan, reg_villages.name AS kelurahan, reg_villages.id AS kelid")
+            // ->leftJoin('reg_regencies', 'reg_regencies.province_id', '=', 'reg_provinces.id')
+            // ->leftJoin('reg_districts', 'reg_districts.regency_id', '=', 'reg_regencies.id')
+            // ->leftJoin('reg_villages', 'reg_villages.district_id', '=', 'reg_districts.id')
+            // ->get()->map(function ($data)
+            // {
+            //     return [
+            //         'id' => Str::of("kel-{$data->kelid}")->squish(),
+            //         'name' => $data->kelurahan,
+            //         'type' => 'Area',
+            //         'refName' => "{$data->kecamatan}," . Str::of($data->kabupaten_kota)->lower()->studly()->ucsplit()->join(" ") . ",". Str::of($data->provinsi)->lower()->studly()->ucsplit()->join(" ")
+            //     ];
+            // });
+
+            $kecamatan = DB::table('reg_provinces')
+            ->selectRaw("reg_provinces.name AS provinsi, reg_regencies.name AS kabupaten_kota, reg_districts.name AS kecamatan, reg_districts.id AS kecid")
+            ->leftJoin('reg_regencies', 'reg_regencies.province_id', '=', 'reg_provinces.id')
+            ->leftJoin('reg_districts', 'reg_districts.regency_id', '=', 'reg_regencies.id')
+            ->get()->map(function ($data)
+            {
+                return [
+                    'id' => Str::of("kec-{$data->kecid}")->squish(),
+                    'name' => $data->kecamatan,
+                    'type' => 'Kecamatan',
+                    'refName' => Str::of($data->kabupaten_kota)->lower()->studly()->ucsplit()->join(" ") . ",". Str::of($data->provinsi)->lower()->studly()->ucsplit()->join(" ")
+                ];
+            });
+
+
+            $kabupaten = DB::table('reg_regencies')
+            ->selectRaw("reg_provinces.name AS provinsi, reg_regencies.name AS kabupaten_kota, reg_regencies.id AS kabid")
+            ->leftJoin('reg_provinces', 'reg_provinces.id', '=', 'reg_regencies.province_id')
+            ->get()->map(function ($data)
+            {
+                return [
+                    'id' => Str::of("kab-{$data->kabid}")->squish(),
+                    'name' => $data->kabupaten_kota,
+                    'type' => 'Kabupaten / Kota',
+                    'refName' => Str::of($data->provinsi)->lower()->studly()->ucsplit()->join(" ")
+                ];
+            });
+
+            $provinsi = DB::table('reg_provinces')->get()->map(function ($data)
+            {
+                return [
+                    'id' => 'prov-' . Str::of($data->id),
+                    'name' => Str::of($data->name)->lower()->studly()->ucsplit()->join(" "),
+                    'type' => 'Provinsi',
+                    'refName' => 'Indonesia'
+                ];
+            });
+
+        return [
+            // 'kelurahan' => $kelurahan,
+            'kecamatan' => $kecamatan,
+            'kabupaten' => $kabupaten,
+            'provinsi'  => $provinsi,
+
         ];
     }
 }

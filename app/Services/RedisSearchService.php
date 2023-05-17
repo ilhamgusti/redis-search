@@ -48,6 +48,22 @@ final class RedisSearchService
         return $this;
     }
 
+    public function locationIndex(string $indexName, array $prefixHash)
+    {
+        $builder = new \MacFJA\RediSearch\IndexBuilder();
+        $builder
+            ->setPrefixes(['location:detail:'])
+            ->setIndex('locations-idx')
+            ->addTagField('id', sortable: true)
+            ->addTextField('name')
+            ->addTagField('type')
+            ->addTagField('refName', separator: ',')
+            ->addTagField('refId', separator: ',')
+            ->create($this->client);
+
+        return $this;
+    }
+
     public function addDocument($indexName, $data, $hash)
     {
 
@@ -56,7 +72,7 @@ final class RedisSearchService
         return $this;
     }
 
-    public function search(string $indexName, string $query, ?array $highlights = null, ?array $returnFields, ?int $limitOffset, ?int $limitSize, ?array $sortByFields)
+    public function search(string $indexName, string $query, ?array $highlights = null, ?array $returnFields = null, ?int $limitOffset = null, ?int $limitSize = null, ?array $sortByFields = null)
     {
         $startTime = microtime(true); //get time in micro seconds(1 millionth)
         $search = new \MacFJA\RediSearch\Redis\Command\Search();
@@ -82,24 +98,32 @@ final class RedisSearchService
                     $search->setSortBy($field, $direction);
                 }
             }
-            $command = new Profile('2.2.0');
-            $command
-                ->setIndex($indexName)
-                ->setTypeSearch()
-                ->setQuery($search)->setLimited();            
             
+            // $profileResults = $this->profiling($indexName, $search);
+
             $results = $this->client->execute($search);
 
             $endTime = microtime(true);
 
-            $profileResults = $this->client->execute($command);
-
                     
-            echo "milliseconds to execute:". ($endTime-$startTime)*1000;
-            dd($profileResults[1][0][0]." : " . $profileResults[1][0][1] . ' ms', $search,$command, $results);
+            // echo "milliseconds to execute:". ($endTime-$startTime)*1000;
+
+            // dd($profileResults[1][0][0]." : " . $profileResults[1][0][1] . ' ms', $results);
             
 
         return $results;
+    }
+
+    public function profiling($indexName, $search){
+        $command = new Profile('2.2.0');
+        $command
+            ->setIndex($indexName)
+            ->setTypeSearch()
+            ->setQuery($search)->setLimited(); 
+
+        $result = $this->client->execute($command);
+
+        return $result;
     }
 
 
