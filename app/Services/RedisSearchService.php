@@ -72,7 +72,7 @@ final class RedisSearchService
         return $this;
     }
 
-    public function search(string $indexName, string $query, ?array $highlights = null, ?array $returnFields = null, ?int $limitOffset = null, ?int $limitSize = null, ?array $sortByFields = null)
+    public function search(string $indexName, string $query, ?array $highlights = null, ?array $returnFields = null, ?int $limitOffset = null, ?int $limitSize = null, ?array $sortByFields = null, ?string $scorer = 'TFIDF')
     {
         $startTime = microtime(true); //get time in micro seconds(1 millionth)
         $search = new \MacFJA\RediSearch\Redis\Command\Search();
@@ -92,6 +92,8 @@ final class RedisSearchService
             if ($returnFields){
                 $search->setReturn(...$returnFields);
             }
+
+            $search->setScorer($scorer);
 
             if(!empty($sortByFields)){
                 foreach ($sortByFields as $field => $direction) {

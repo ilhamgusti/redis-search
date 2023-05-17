@@ -94,10 +94,10 @@ class GenerateIndexLocationsRedis extends Command
             ->leftJoin('reg_districts', 'reg_districts.regency_id', '=', 'reg_regencies.id')
             ->get()->map(function ($data) {
                 return [
-                    'id' => Str::of("kec-{$data->kecid}")->squish()->toString(),
+                    'id' => "kec-{$data->kecid}",
                     'name' => $data->kecamatan,
                     'type' => 'Kecamatan',
-                    'refName' => Str::of($data->kabupaten_kota)->lower()->studly()->ucsplit()->join(" ") . "," . Str::of($data->provinsi)->lower()->studly()->ucsplit()->join(" ")
+                    'refName' => $data->kabupaten_kota . "," . $data->provinsi
                 ];
             })->each(function ($data) {
                 Redis::hMSet($this->prefix . $data['id'], $data);
@@ -109,10 +109,10 @@ class GenerateIndexLocationsRedis extends Command
             ->leftJoin('reg_provinces', 'reg_provinces.id', '=', 'reg_regencies.province_id')
             ->get()->map(function ($data) {
                 return [
-                    'id' => Str::of("kab-{$data->kabid}")->squish()->toString(),
+                    'id' => "kab-{$data->kabid}",
                     'name' => $data->kabupaten_kota,
                     'type' => 'Kabupaten / Kota',
-                    'refName' => Str::of($data->provinsi)->lower()->studly()->ucsplit()->join(" ")
+                    'refName' => $data->provinsi
                 ];
             })->each(function ($data) {
             Redis::hMSet($this->prefix . $data['id'], $data);
@@ -120,8 +120,8 @@ class GenerateIndexLocationsRedis extends Command
 
         $provinsi = DB::table('reg_provinces')->get()->map(function ($data) {
             return [
-                'id' => 'prov-' . Str::of($data->id)->toString(),
-                'name' => Str::of($data->name)->lower()->studly()->ucsplit()->join(" "),
+                'id' => 'prov-' . $data->id,
+                'name' => $data->name,
                 'type' => 'Provinsi',
                 'refName' => 'Indonesia'
             ];

@@ -6,6 +6,7 @@ use App\Models\Property;
 use App\Services\RedisSearchService;
 use Illuminate\Http\Request;
 use DB;
+use MacFJA\RediSearch\Query\Builder\TextFacet;
 use Str;
 use MacFJA\RediSearch\Query\Builder\NumericFacet;
 
@@ -43,6 +44,7 @@ class RedisController extends Controller
         $condition = $request->condition;
         
         $queryBuilder = new \MacFJA\RediSearch\Query\Builder();
+        $queryBuilderLocation = new \MacFJA\RediSearch\Query\Builder();
 
         if (!is_null($minPrice) && !is_null($maxPrice)){
             $queryBuilder->addElement(new NumericFacet('price', $minPrice, $maxPrice));
@@ -70,6 +72,7 @@ class RedisController extends Controller
 
         if($q){
             $queryBuilder->addString($q);
+            $queryBuilderLocation->addElement(new TextFacet(['name'], $q));
         }
 
         if($location){
@@ -127,6 +130,7 @@ class RedisController extends Controller
         }
 
         $query = $queryBuilder->render();
+        $queryLocation = $queryBuilderLocation->render();
 
         $data = RedisSearchService::make()->search(
             indexName: 'properties-idx',
@@ -142,8 +146,10 @@ class RedisController extends Controller
 
         $location = RedisSearchService::make()->search(
             indexName: 'location-idx',
-            query: "$request->q*",
+            query: $queryLocation,
             highlights: ['name'],
+            limitOffset: $request->offset,
+            limitSize: $request->limit,
         );
 
         // $content = view(
