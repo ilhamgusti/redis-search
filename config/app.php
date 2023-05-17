@@ -19,6 +19,7 @@ return [
     'name' => env('APP_NAME', 'Laravel'),
 
     'properties' => 'properties:detail:',
+    'developer' => 'developer:detail:',
 
     /*
     |--------------------------------------------------------------------------

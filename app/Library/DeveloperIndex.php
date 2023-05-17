@@ -8,18 +8,18 @@ use MacFJA\RediSearch\IndexBuilder;
 use MacFJA\RediSearch\Index;
 
 
-class PropertiesIndex
+class DeveloperIndex
 {
 
 	private $client;
-	private $indexName = 'properties-idx';
+	private $indexName = 'developer-idx';
 	private $prefixes;
 	private $indexBuilder;
 
 	public function __construct()
 	{
 		$this->client = (new ClientFacade())->getClient(Redis::client());
-		$this->prefixes = [config('database.redis.options.prefix').config('app.properties'),config('database.redis.options.prefix').config('app.developer')];
+		$this->prefixes = [config('database.redis.options.prefix').config('app.developer')];
 		$this->indexBuilder = new IndexBuilder();
 	}
 
@@ -49,22 +49,7 @@ class PropertiesIndex
 			->setPrefixes($this->prefixes)
 			->setIndex($this->indexName)
 			->addTagField('id', sortable: true)
-			->addTextField('title')
-			->addTextField('address')
-			->addTagField('location', separator: ',')
-			->addNumericField('price', sortable: true)
-			->addNumericField('landArea')
-			->addNumericField('buildingSize')
-			->addNumericField('bedroom')
-			->addNumericField('bathroom')
-			->addTagField('certificate', separator: ',')
-			->addTagField('type', separator: ',')
-			->addTagField('furnish', separator: ',')
-			->addTagField('condition', separator: ',')
-			->addTagField('category', separator: ',')
-			->addNumericField('created_at', sortable: true)
-			->addTextField('description')
-			->addTagField('developerid', sortable: true)
+			->addTextField('name')
 			->create($this->client);
 	}
 }

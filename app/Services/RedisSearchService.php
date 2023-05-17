@@ -1,6 +1,7 @@
 <?php
 namespace App\Services;
 
+use App\Models\Developer;
 use App\Models\Property;
 use Illuminate\Support\Facades\Redis;
 use MacFJA\RediSearch\Query\Builder;
@@ -110,11 +111,20 @@ final class RedisSearchService
     {
         $faker = Faker::create('id_ID');
 
+        $lazyCollection1 = collect(range(1,4))->lazy();
+        $lazyCollection1->each(function (int $number) use ($faker) {
+            Developer::create(
+                [
+                    'title' => $faker->name(),
+                ]
+            );
+        });
+
         $lazyCollection = collect(range(1,$total))->lazy();
         $lazyCollection->each(function (int $number) use ($faker) {
             Property::create(
                 [
-                    'title' => $faker->sentence(rand(5, 20), true),
+                    'title' => 'Mustika rumah di jakarta dari sabang sampe maroke',
                     'address' => $faker->address(),
                     'location' => $faker->city(),
                     'price' => $faker->numberBetween(100_000_000, 50_000_000_000),
@@ -129,8 +139,9 @@ final class RedisSearchService
                     'created_at' => $faker->dateTime(),
                     'category' => $faker->randomElement(['special']),
                     'description' => $faker->paragraph(80),
+                    'developerid' => null,
                 ]
             );
-        });   
+        });
     }
 }
