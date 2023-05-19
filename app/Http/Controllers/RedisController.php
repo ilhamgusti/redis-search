@@ -6,6 +6,7 @@ use App\Models\Property;
 use App\Services\RedisSearchService;
 use Illuminate\Http\Request;
 use DB;
+use Illuminate\Pagination\LengthAwarePaginator;
 use MacFJA\RediSearch\Query\Builder\TextFacet;
 use Str;
 use MacFJA\RediSearch\Query\Builder\NumericFacet;
@@ -143,6 +144,7 @@ class RedisController extends Controller
                 ...$sortByFields
             ]
         );
+        $datass = new LengthAwarePaginator(items: collect($data->current())->map(fn($data) => $data->getFields()), total: $data->getTotalCount(), perPage: $request->limit, currentPage: 1);
 
         $location = RedisSearchService::make()->search(
             indexName: 'location-idx',
@@ -167,6 +169,7 @@ class RedisController extends Controller
                     'originalData' => [],
                     'total'=> $data->getTotalCount(),
                     'data' => collect($data->current())->map(fn($data) => $data->getFields()),
+                    'paginateData'=> $datass,
                     'location' => collect($location->current())->map(fn($data) => $data->getFields())
         ]);
 
