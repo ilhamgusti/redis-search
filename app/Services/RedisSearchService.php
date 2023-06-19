@@ -3,11 +3,13 @@ namespace App\Services;
 
 use App\Models\Developer;
 use App\Models\Property;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Redis;
 use MacFJA\RediSearch\Query\Builder;
 use MacFJA\RediSearch\Redis\Client\ClientFacade;
 use Faker\Factory as Faker;
 use MacFJA\RediSearch\Redis\Command\Profile;
+use MacFJA\RediSearch\Redis\Response\PaginatedResponse;
 
 final class RedisSearchService
 {
@@ -73,8 +75,54 @@ final class RedisSearchService
         return $this;
     }
 
-    public function search(string $indexName, string $query, ?array $highlights = null, ?array $returnFields = null, ?int $limitOffset = null, ?int $limitSize = null, ?array $sortByFields = null, ?string $scorer = 'TFIDF')
+    public function aggregate(string $indexName, string $query, ?array $returnFields = null, ?int $limitOffset = 0, ?int $limitSize = 10, ?array $sortByFields = null, ?int $page = null, ?int $max = null): PaginatedResponse {
+
+        $startTime = microtime(true); //get time in micro seconds(1 millionth)
+        
+        $aggregate = new \MacFJA\RediSearch\Redis\Command\Aggregate();
+        $aggregate->setIndex($indexName)
+        ->setQuery($query);
+
+        if ($returnFields){
+            $aggregate->setLoad(...$returnFields);
+        }else{
+            $aggregate->setLoadAll();
+        }
+
+        if (!is_null($limitOffset) && !is_null($limitSize)){
+            $aggregate->setLimit($limitOffset, $limitSize);
+        }
+
+        if(!empty($sortByFields)){
+            foreach ($sortByFields as $field => $direction) {
+                $aggregate->addSortBy($field, $direction);
+            }
+        }
+
+        if(!empty($max)){
+            $aggregate->setSortByMax($max);
+        }
+
+        $profileResults = $this->profiling($indexName, $aggregate);
+
+        $results = $this->client->execute($aggregate);
+        $endTime = microtime(true);
+
+        echo "AGGREGATE milliseconds to execute:". ($endTime-$startTime)*1000;
+
+        dump("AGGREGATE ". $profileResults[1][0][0]." : " . $profileResults[1][0][1] . ' ms', $results);
+        
+
+        return $results;
+
+    }
+
+    public function search(string $indexName, string $query, ?array $highlights = null, ?array $returnFields = null, ?int $limitOffset = null, ?int $limitSize = null, ?array $sortByFields = null, ?string $scorer = 'TFIDF', ?int $page = null)
     {
+
+        $perPage = 10;
+        $currentPage = $page ?? 1;
+
         $startTime = microtime(true); //get time in micro seconds(1 millionth)
         $search = new \MacFJA\RediSearch\Redis\Command\Search();
         $search
@@ -102,27 +150,33 @@ final class RedisSearchService
                 }
             }
             
-            // $profileResults = $this->profiling($indexName, $search);
+            $profileResults = $this->profiling($indexName, $search);
 
             $results = $this->client->execute($search);
 
             $endTime = microtime(true);
 
                     
-            // echo "milliseconds to execute:". ($endTime-$startTime)*1000;
+            echo "SEARCH milliseconds to execute:". ($endTime-$startTime)*1000;
 
-            // dd($profileResults[1][0][0]." : " . $profileResults[1][0][1] . ' ms', $results);
+            dump("SEARCH ". $profileResults[1][0][0]." : " . $profileResults[1][0][1] . ' ms', $results);
             
+            $datass = new LengthAwarePaginator(items: collect($results->current())->map(fn($data) => $data->getFields()), total: $results->getTotalCount(), perPage: $perPage, currentPage: $currentPage);
 
         return $results;
     }
 
-    public function profiling($indexName, $search){
+    public function profiling($indexName, $search, $type = "SEARCH"){
         $command = new Profile('2.2.0');
         $command
-            ->setIndex($indexName)
-            ->setTypeSearch()
-            ->setQuery($search)->setLimited(); 
+            ->setIndex($indexName);
+            if($type == 'SEARCH'){
+                $command->setTypeSearch();
+            }else{
+                $command->setTypeAggregate();
+            }
+           
+            $command->setQuery($search)->setLimited(); 
 
         $result = $this->client->execute($command);
 
@@ -137,20 +191,20 @@ final class RedisSearchService
     {
         $faker = Faker::create('id_ID');
 
-        $lazyCollection1 = collect(range(1,4))->lazy();
-        $lazyCollection1->each(function (int $number) use ($faker) {
-            Developer::create(
-                [
-                    'title' => $faker->name(),
-                ]
-            );
-        });
+        // $lazyCollection1 = collect(range(1,ceil($total / 3)))->lazy();
+        // $lazyCollection1->each(function (int $number) use ($faker) {
+        //     Developer::create(
+        //         [
+        //             'title' => $faker->name(),
+        //         ]
+        //     );
+        // });
 
         $lazyCollection = collect(range(1,$total))->lazy();
         $lazyCollection->each(function (int $number) use ($faker) {
             Property::create(
                 [
-                    'title' => 'Mustika rumah di jakarta dari sabang sampe maroke',
+                    'title' => $faker->sentence(rand(5, 20), true),
                     'address' => $faker->address(),
                     'location' => $faker->city(),
                     'price' => $faker->numberBetween(100_000_000, 50_000_000_000),

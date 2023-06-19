@@ -26,8 +26,26 @@ class Developer extends Model
      */
     protected static function booted(): void
     {
+        /**
+         * Handle the Properties "created" event.
+         */
         static::created(function (Developer $developer) {
             Redis::hMSet('developer:detail:'.$developer->id, $developer->toArray());
+        });
+
+        /**
+         * Handle the Developer "updated" event.
+         */
+        static::updated(function (Developer $data) {
+
+            Redis::hMSet('developer:detail:'.$data->id, $data->toArray());
+        });
+
+        /**
+         * Handle the Developer "deleted" event.
+         */
+        static::deleted(function (Developer $data) {
+            Redis::delete('developer:detail:'.$data->id);
         });
     }
 }

@@ -19,6 +19,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [RedisController::class, 'index']);
 
 Route::get('/search', [RedisController::class, 'search']);
+Route::get('/suggest', [RedisController::class, 'suggestion']);
+
+
 Route::get('/searchtest', [PropertiesControlleer::class, 'Searchtest']);
 Route::get('/searchtest/{id?}', [PropertiesControlleer::class, 'Searchbyid']);
 Route::get('/seeding', [RedisController::class, 'seeding']);

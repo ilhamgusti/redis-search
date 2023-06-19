@@ -6,8 +6,7 @@ use App\Models\Property;
 use App\Services\RedisSearchService;
 use Illuminate\Http\Request;
 use DB;
-use Illuminate\Pagination\LengthAwarePaginator;
-use MacFJA\RediSearch\Query\Builder\TextFacet;
+use MacFJA\RediSearch\Redis\Response\ResponseItem;
 use Str;
 use MacFJA\RediSearch\Query\Builder\NumericFacet;
 
@@ -26,103 +25,8 @@ class RedisController extends Controller
         )->fragmentsIf($request->hasHeader('HX-Request'), ['original-data']);
     }
 
-    public function search(Request $request)
-    {
-        $minPrice = $request->minPrice;
-        $maxPrice = $request->maxPrice;
-        $q = $request->q;
-        $location = $request->location;
-        $furnish = $request->furnish;
-        $bathroom = $request->bathroom;
-        $bedroom = $request->bedroom;
-        $landAreaMin = $request->landAreaMin;
-        $landAreaMax = $request->landAreaMax;
-        $buildingSizeMin = $request->buildingSizeMin;
-        $buildingSizeMax = $request->buildingSizeMax;
-        $type = $request->type;
-        $category = $request->category;
-        $certificate = $request->certificate;
-        $condition = $request->condition;
-        
-        $queryBuilder = new \MacFJA\RediSearch\Query\Builder();
-        $queryBuilderLocation = new \MacFJA\RediSearch\Query\Builder();
-
-        if (!is_null($minPrice) && !is_null($maxPrice)){
-            $queryBuilder->addElement(new NumericFacet('price', $minPrice, $maxPrice));
-        }
-
-        if($bathroom){
-            $queryBuilder->addElement(NumericFacet::greaterThanOrEquals('bathroom', $bathroom));
-        }
-
-        if($bedroom){
-            $queryBuilder->addElement(NumericFacet::greaterThanOrEquals('bedroom', $bedroom));
-        }
-
-        if (!is_null($landAreaMin) && !is_null($landAreaMax)){
-            $queryBuilder->addElement(new NumericFacet('landArea', $landAreaMin, $landAreaMax));
-        }    
-        
-        if (!is_null($buildingSizeMin) && !is_null($buildingSizeMax)){
-            $queryBuilder->addElement(new NumericFacet('buildingSize', $buildingSizeMin, $buildingSizeMax));
-        }    
-        
-        if (!is_null($landAreaMin) && !is_null($landAreaMax)){
-            $queryBuilder->addElement(new NumericFacet('landArea', $landAreaMin, $landAreaMax));
-        }
-
-        if($q){
-            $queryBuilder->addString($q);
-            $queryBuilderLocation->addElement(new TextFacet(['name'], $q));
-        }
-
-        if($location){
-            if(is_array($location)){
-                $queryBuilder->addTagFacet('location',  ...$location);
-            }else{
-                $queryBuilder->addTagFacet('location', $location);
-            }
-        }
-
-        if($type){
-            if(is_array($type)){
-                $queryBuilder->addTagFacet('type',  ...$type);
-            }else{
-                $queryBuilder->addTagFacet('type', $type);
-            }
-        }
-
-        if($category){
-            if(is_array($category)){
-                $queryBuilder->addTagFacet('category',  ...$category);
-            }else{
-                $queryBuilder->addTagFacet('category', $category);
-            }
-        }
-
-        if($condition){
-            if(is_array($condition)){
-                $queryBuilder->addTagFacet('condition',  ...$condition);
-            }else{
-                $queryBuilder->addTagFacet('condition', $condition);
-            }
-        }
-
-        if($certificate){
-            if(is_array($certificate)){
-                $queryBuilder->addTagFacet('certificate',  ...$certificate);
-            }else{
-                $queryBuilder->addTagFacet('certificate', $certificate);
-            }
-        }
-
-        if($furnish){
-            if(is_array($furnish)){
-                $queryBuilder->addTagFacet('furnish',  ...$furnish);
-            }else{
-                $queryBuilder->addTagFacet('furnish', $furnish);
-            }
-        }
+    public function search(Request $request){
+        $query = $this->queryBuilderRender($request);
 
         $sortByFields = $request->sortBy;
 
@@ -130,29 +34,60 @@ class RedisController extends Controller
             $sortByFields = [];
         }
 
-        $query = $queryBuilder->render();
-        $queryLocation = $queryBuilderLocation->render();
-
         $data = RedisSearchService::make()->search(
             indexName: 'properties-idx',
             query: $query,
             highlights: ['title', 'address', 'location', 'furnish', 'price','description'],
-            returnFields: $request->returnFields,
+            // returnFields: ['title', 'price', 'location', 'bathroom', 'bedroom', 'landArea', 'buildingSize'],
             limitOffset: $request->offset,
             limitSize: $request->limit,
             sortByFields: [
                 ...$sortByFields
             ]
         );
-        $datass = new LengthAwarePaginator(items: collect($data->current())->map(fn($data) => $data->getFields()), total: $data->getTotalCount(), perPage: $request->limit, currentPage: 1);
+
+         return response()->json([
+                    'originalData' => [],
+                    'total'=> $data->getTotalCount(),
+                    'data' => collect($data->current())->map(fn($data) => $data->getFields()),
+        ]);
+
+    }
+    
+    public function suggestion(Request $request)
+    {
+        $startTime = microtime(true); //get time in micro seconds(1 millionth)
+
+        $query = $this->queryBuilderRender($request);
+
+        
+        $sortByFields = $request->sortBy;
+
+        if(empty($sortByFields)){
+            $sortByFields = [];
+        }
+
+        $data = RedisSearchService::make()->search(
+            indexName: 'properties-idx',
+            query: $query,
+            // highlights: ['title', 'address', 'location', 'furnish', 'price','description'],
+            returnFields: ['title', 'price', 'location'],
+            limitOffset: $request->offset,
+            limitSize: $request->limit,
+            // max: $request->max,
+            sortByFields: [
+                ...$sortByFields
+            ]
+        );
 
         $location = RedisSearchService::make()->search(
             indexName: 'location-idx',
-            query: $queryLocation,
+            query: $query,
             highlights: ['name'],
             limitOffset: $request->offset,
             limitSize: $request->limit,
         );
+        
 
         // $content = view(
         //     'index',
@@ -165,12 +100,24 @@ class RedisController extends Controller
 
         // return response($content)->header('HX-Replace-Url',"/?q={$request->q}");
 
+        $endTime = microtime(true);
+        
+        // echo "milliseconds to execute:". ($endTime-$startTime)*1000;
+        dd($data);
+        
         return response()->json([
                     'originalData' => [],
+                    'cost' =>[
+                        'PHP' => ($endTime-$startTime)*1000 . ' ms',
+                        'redis' => '',
+                    ],
                     'total'=> $data->getTotalCount(),
-                    'data' => collect($data->current())->map(fn($data) => $data->getFields()),
-                    'paginateData'=> $datass,
-                    'location' => collect($location->current())->map(fn($data) => $data->getFields())
+                    'data' => collect($data->current())->map(function(ResponseItem $item) use ($data) {
+                        return [
+                        'data'=>$item->getFields(),
+                        ];
+                }),
+                    'location' => collect($location->current())->map(fn(ResponseItem $data) => $data->getFields())
         ]);
 
     }
@@ -245,5 +192,114 @@ class RedisController extends Controller
             'provinsi'  => $provinsi,
 
         ];
+    }
+
+    private function queryBuilderRender(Request $request)
+    {
+        $minPrice = $request->minPrice;
+        $maxPrice = $request->maxPrice;
+        $q = $request->q;
+        $location = $request->location;
+        $furnish = $request->furnish;
+        $bathroom = $request->bathroom;
+        $bedroom = $request->bedroom;
+        $landAreaMin = $request->landAreaMin;
+        $landAreaMax = $request->landAreaMax;
+        $buildingSizeMin = $request->buildingSizeMin;
+        $buildingSizeMax = $request->buildingSizeMax;
+        $type = $request->type;
+        $category = $request->category;
+        $certificate = $request->certificate;
+        $condition = $request->condition;
+        
+        $queryBuilder = new \MacFJA\RediSearch\Query\Builder();
+
+        if (!is_null($minPrice) && !is_null($maxPrice)){
+            $queryBuilder->addElement(new NumericFacet('price', $minPrice, $maxPrice));
+        }
+
+        if($bathroom){
+            $queryBuilder->addElement(NumericFacet::greaterThanOrEquals('bathroom', $bathroom));
+        }
+
+        if($bedroom){
+            $queryBuilder->addElement(NumericFacet::greaterThanOrEquals('bedroom', $bedroom));
+        }
+
+        if (!is_null($landAreaMin) && !is_null($landAreaMax)){
+            $queryBuilder->addElement(new NumericFacet('landArea', $landAreaMin, $landAreaMax));
+        }    
+        
+        if (!is_null($buildingSizeMin) && !is_null($buildingSizeMax)){
+            $queryBuilder->addElement(new NumericFacet('buildingSize', $buildingSizeMin, $buildingSizeMax));
+        }    
+        
+        if (!is_null($landAreaMin) && !is_null($landAreaMax)){
+            $queryBuilder->addElement(new NumericFacet('landArea', $landAreaMin, $landAreaMax));
+        }
+
+        if($q){
+            $queryBuilder->addString($q);
+            $queryBuilder->includeSpace();
+            $queryBuilder->priority();
+        }
+
+        if($location){
+            if(is_array($location)){
+                $queryBuilder->addTagFacet('location',  ...$location);
+            }else{
+                $queryBuilder->addTagFacet('location', $location);
+            }
+        }
+
+        if($type){
+            if(is_array($type)){
+                $queryBuilder->addTagFacet('type',  ...$type);
+            }else{
+                $queryBuilder->addTagFacet('type', $type);
+            }
+        }
+
+        if($category){
+            if(is_array($category)){
+                $queryBuilder->addTagFacet('category',  ...$category);
+            }else{
+                $queryBuilder->addTagFacet('category', $category);
+            }
+        }
+
+        if($condition){
+            if(is_array($condition)){
+                $queryBuilder->addTagFacet('condition',  ...$condition);
+            }else{
+                $queryBuilder->addTagFacet('condition', $condition);
+            }
+        }
+
+        if($certificate){
+            if(is_array($certificate)){
+                $queryBuilder->addTagFacet('certificate',  ...$certificate);
+            }else{
+                $queryBuilder->addTagFacet('certificate', $certificate);
+            }
+        }
+
+        if($furnish){
+            if(is_array($furnish)){
+                $queryBuilder->addTagFacet('furnish',  ...$furnish);
+            }else{
+                $queryBuilder->addTagFacet('furnish', $furnish);
+            }
+        }
+
+        $sortByFields = $request->sortBy;
+
+        if(empty($sortByFields)){
+            $sortByFields = [];
+        }
+
+        $query = $queryBuilder->render();
+
+        return $query;
     }
 }

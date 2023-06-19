@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('condition');
             $table->string('category');
             $table->text('description');
-            $table->integer('developerid');
+            $table->integer('developerid')->nullable();
             $table->timestamps();
         });
     }

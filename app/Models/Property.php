@@ -24,9 +24,27 @@ class Property extends Model
      */
     protected static function booted(): void
     {
+        /**
+         * Handle the Properties "created" event.
+         */
         static::created(function (Property $property) {
 
             Redis::hMSet('properties:detail:'.$property->id, $property->toArray());
+        });
+
+        /**
+         * Handle the Properties "updated" event.
+         */
+        static::updated(function (Property $property) {
+
+            Redis::hMSet('properties:detail:'.$property->id, $property->toArray());
+        });
+
+        /**
+         * Handle the Properties "deleted" event.
+         */
+        static::deleted(function (Property $property) {
+            Redis::delete('properties:detail:'.$property->id);
         });
     }
 }
