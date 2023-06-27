@@ -133,7 +133,6 @@
         }
     });
   }
-
 	
 
     // Event listener untuk checkbox kategori

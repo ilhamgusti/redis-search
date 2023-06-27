@@ -78,7 +78,6 @@ class GenerateIndexProductRedis extends Command
         return $this->indexBuilder
             ->setPrefixes($this->prefixes)
             ->setIndex($this->indexName)
-            ->addTextField('nama')
             ->addNumericField('harga',sortable: true)
             ->addTagField('idkategori', separator: ',',sortable: true)
 			->create($this->client);

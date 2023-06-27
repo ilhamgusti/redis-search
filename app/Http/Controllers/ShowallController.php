@@ -172,7 +172,7 @@ class ShowallController extends Controller
          // Menggunakan LengthAwarePaginator untuk mempermudah pagination
          $paginator = new LengthAwarePaginator(
             $products,
-            $results->getTotalCount(),
+            50,
             $perPage,
             $page,
             ['path' => $request->url(), 'query' => $request->query()]

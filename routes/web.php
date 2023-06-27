@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ImageController;
 use App\Http\Controllers\RedisController;
 use App\Http\Controllers\PropertiesControlleer;
 use App\Http\Controllers\ShowallController;
@@ -64,3 +65,5 @@ Route::get('/insertproduct', function () {
 
     return 'Data products have been saved to Redis.';
 });
+
+
