@@ -146,6 +146,7 @@ class ShowallController extends Controller
 
         // Mendapatkan nomor halaman yang diminta
         $page = $request->input('page',1);
+        $offset = ($page - 1) * $perPage;
         $clientFacade = new ClientFacade();
         $client = $clientFacade->getClient(Redis::client());
         $queryBuilder = new Builder();
@@ -158,7 +159,7 @@ class ShowallController extends Controller
         $search
             ->setIndex('product-idx')
             ->setSortBy('harga',$request->sort ?? 'ASC')
-            ->setLimit($page, $perPage)
+            ->setLimit($offset, $perPage)
             ->setQuery($queries);
         $results = $client->execute($search);
         $items = $results->current();
